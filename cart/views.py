@@ -80,9 +80,9 @@ def subsri(request):
     totOrders = 0
     for order in orders:
         totOrders += order.total
-    if (order.total < 15):
+    if (totOrders < 15):
         template_data['Sub'] = 'Basic'
-    elif (order.total >= 15 and order.total < 30):
+    elif (totOrders >= 30 and totOrders < 30):
         template_data['Sub'] = 'Medium'
     else:
         template_data['Sub'] = 'Premium'
