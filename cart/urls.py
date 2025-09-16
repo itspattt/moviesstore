@@ -7,4 +7,5 @@ urlpatterns = [
     path('<int:id>/delete/', views.delete, name='cart.delete_item'),
     path('clear/', views.clear, name='cart.clear'),
     path('purchase/', views.purchase, name='cart.purchase'),
+    path('subLevel/', views.subsri, name='cart.subscription'),
 ]

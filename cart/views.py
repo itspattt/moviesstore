@@ -66,3 +66,26 @@ def purchase(request):
     template_data['order_id'] = order.id
     return render(request, 'cart/purchase.html',
         {'template_data': template_data})
+
+@login_required
+def subsri(request):
+    cart = request.session.get('cart', {})
+    movie_ids = list(cart.keys())
+    movies_in_cart = Movie.objects.filter(id__in=movie_ids)
+    template_data = {}
+    template_data['title'] = 'Subscription'
+    cart_total = calculate_cart_total(cart, movies_in_cart)
+    orders = Order.objects.filter(user=request.user).order_by('-date')
+    print(orders)
+    totOrders = 0
+    for order in orders:
+        totOrders += order.total
+    if (order.total < 15):
+        template_data['Sub'] = 'Basic'
+    elif (order.total >= 15 and order.total < 30):
+        template_data['Sub'] = 'Medium'
+    else:
+        template_data['Sub'] = 'Premium'
+
+    return render(request, 'cart/subscription.html',
+        {'template_data': template_data})
