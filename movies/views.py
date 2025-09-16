@@ -21,6 +21,18 @@ def edit_review(request, id, review_id):
         return redirect('movies.show', id=id)
     else:
         return redirect('movies.show', id=id)
+    
+@login_required
+def like_review(request, id, review_id):
+    review = get_object_or_404(Review, id=review_id)
+    if (request.user not in review.whoLiked.all()):
+        review.num_likes += 1
+        review.whoLiked.add(request.user)
+    else:
+        review.num_likes -= 1
+        review.whoLiked.remove(request.user)
+    review.save()
+    return redirect('movies.show', id=id)
 
 def index(request):
     search_term = request.GET.get('search')
@@ -36,7 +48,7 @@ def index(request):
 
 def show(request, id):
     movie = Movie.objects.get(id=id)
-    reviews = Review.objects.filter(movie=movie)
+    reviews = Review.objects.filter(movie=movie).order_by('-num_likes')
     template_data = {}
     template_data['title'] = movie.name
     template_data['movie'] = movie

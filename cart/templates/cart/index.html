@@ -26,7 +26,11 @@
             <td>{{ movie.id }}</td>
             <td>{{ movie.name }}</td>
             <td>${{ movie.price }}</td>
-            <td>{{ request.session.cart|get_quantity:movie.id }}
+            <td>{{ request.session.cart|get_quantity:movie.id }}</td>
+            <td>
+              <a href="{% url 'cart.delete_item' id=movie.id %}">
+                <button class="btn btn-danger mb-2">Delete</button>
+              </a>
             </td>
           </tr>
           {% endfor %}

@@ -28,6 +28,15 @@ def add(request, id):
     request.session['cart'] = cart
     return redirect('cart.index')
 
+def delete(request, id):
+    get_object_or_404(Movie, id=id)
+    print(id)
+    cart = request.session.get('cart', {})
+    print(cart)
+    del cart[str(id)]
+    request.session['cart'] = cart
+    return redirect('cart.index')
+
 def clear(request):
     request.session['cart'] = {}
     return redirect('cart.index')
