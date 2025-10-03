@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Movie, Review
+from .models import Movie, Review, Petition
 from django.contrib.auth.decorators import login_required
+from .forms import PetitionForm
 
 # Create your views here.
 @login_required
@@ -75,4 +76,35 @@ def delete_review(request, id, review_id):
         user=request.user)
     review.delete()
     return redirect('movies.show', id=id)
+
+def petition_list(request):
+    petitions = Petition.objects.all()
+    template_data = {}
+    template_data['Petitions'] = petitions
+    return render(request, 'movies/pIndex.html', {"template_data": template_data})
+
+def petition_vote(request, id):
+    petition = get_object_or_404(Petition, id=id)
+    petition.num_votes += 1
+    petition.whoVoted.add(request.user)
+    petition.save()
+
+    return redirect('movies.petition_list')
+
+def create_petition(request):
+    if (request.method == 'POST'):
+        form = PetitionForm(request.POST)
+        if form.is_valid():
+            petition = form.save(commit=False)
+            petition.user = request.user
+            petition.num_votes = 0
+            petition.save()
+            return redirect('movies.petition_list')
+    else:
+        form = PetitionForm()
+    
+    return render(request, 'movies/create.html', {'form': form})
+
+    
+
 
