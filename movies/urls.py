@@ -13,4 +13,6 @@ urlpatterns = [
     path('petitions/', views.petition_list, name = "movies.petition_list"),
     path('petitions/new', views.create_petition, name = "movies.create_petition"),
     path('<int:id>/vote/', views.petition_vote, name = "movies.petition_vote"),
+    path("map/", views.movie_map_page, name="movie_map_page"),                              # Renders the page
+    path("map-data/", views.movie_map_data, name="movie_map_data"),                         # Processes map data
 ]

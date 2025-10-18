@@ -105,6 +105,51 @@ def create_petition(request):
     
     return render(request, 'movies/create.html', {'form': form})
 
-    
+def movie_map_page(request):
+    return render(request, "movies/trending.html")
 
+from django.http import JsonResponse
+from collections import defaultdict
+from math import exp
+from django.utils import timezone
+from datetime import timedelta
+from cart.models import Order, Item
+
+def movie_map_data(request):
+    """
+    Returns JSON data for regions with top trending movies.
+    """
+    days_window = 7   # last 7 days
+    top_n = 5         # top 5 movies per region
+    decay_factor = 0.3
+
+    cutoff = timezone.now() - timedelta(days=days_window)
+    items = Item.objects.filter(order__date__gte=cutoff).select_related('movie', 'order')
+
+    # Aggregate weighted scores per region
+    scores = defaultdict(lambda: defaultdict(float))
+    coords = {}  # store coordinates per region
+
+    for item in items:
+        region = f"{item.order.latitude},{item.order.longitude}"  # simple region key
+        coords[region] = {"lat": item.order.latitude or 0, "lng": item.order.longitude or 0}
+
+        days_ago = (timezone.now() - item.order.date).days
+        weight = exp(-decay_factor * days_ago) * item.quantity  # weight by recency and quantity
+        scores[region][item.movie.name] += weight
+
+    # Build top N per region
+    result = []
+    for region, movie_dict in scores.items():
+        sorted_movies = sorted(movie_dict.items(), key=lambda x: x[1], reverse=True)[:top_n]
+        trending_list = [{"title": title, "score": round(score, 2)} for title, score in sorted_movies]
+
+        result.append({
+            "region": region,
+            "lat": coords[region]["lat"],
+            "lng": coords[region]["lng"],
+            "trending": trending_list
+        })
+
+    return JsonResponse(result, safe=False)
 
