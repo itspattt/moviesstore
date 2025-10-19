@@ -1,8 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
+<<<<<<< HEAD
 from .models import Movie, Review, Petition, Rating
 from django.contrib.auth.decorators import login_required
 from .forms import PetitionForm
 from django.db.models import Avg 
+=======
+from .models import Movie, Review, Petition
+from django.contrib.auth.decorators import login_required
+from .forms import PetitionForm
+>>>>>>> 9a9c5298988c2391fa9c7a3449315154049a3ce9
 
 # Create your views here.
 @login_required
@@ -51,6 +57,7 @@ def index(request):
 def show(request, id):
     movie = Movie.objects.get(id=id)
     reviews = Review.objects.filter(movie=movie).order_by('-num_likes')
+<<<<<<< HEAD
 
     # Get user rating if logged in
     user_rating = None
@@ -70,10 +77,13 @@ def show(request, id):
     # Calculate average rating
     avg_rating = movie.ratings.aggregate(Avg("score"))["score__avg"] or 0
 
+=======
+>>>>>>> 9a9c5298988c2391fa9c7a3449315154049a3ce9
     template_data = {}
     template_data['title'] = movie.name
     template_data['movie'] = movie
     template_data['reviews'] = reviews
+<<<<<<< HEAD
 
     return render(request, 'movies/show.html', {
         'template_data': template_data,
@@ -81,6 +91,10 @@ def show(request, id):
         'avg_rating': round(avg_rating, 1)
     })
 
+=======
+    return render(request, 'movies/show.html',
+                  {'template_data': template_data})
+>>>>>>> 9a9c5298988c2391fa9c7a3449315154049a3ce9
 
 @login_required
 def create_review(request, id):
