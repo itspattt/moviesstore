@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Movie Petitions</h2>
+<div class="col-md-6 mx-auto mb-3">
+<ul class="list-group">
+    {% for petition in template_data.Petitions %}
+    <li class="list-group-item pb-3 pt-3">
+    <h4 class="card-title">{{ petition.title }}</h4>
+      <h5 class="card-title">{{ petition.user.username }}</h5>
+      <h6 class="card-subtitle mb-2 text-muted">{{ petition.date }}</h6>
+      <h6 class="card-subtitle mb-2 text-muted">Votes: {{ petition.num_votes }}</h6>
+      <p class="card-text">{{ petition.description }}</p>
+
+      {% if user.is_authenticated and user not in petition.whoVoted.all %}
+        <a class="btn btn-primary" href="{% url 'movies.petition_vote' id=petition.id %}">Vote</a>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% if user.is_authenticated %}
+  <div class="mt-4">
+    <a class="btn btn-primary" href="{% url 'movies.create_petition' %}">New Petition</a>
+    </div>  
+  {% endif %}
+</div>
+{% endblock content %}

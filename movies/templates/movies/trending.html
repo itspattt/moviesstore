@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<style>
+  .map-container {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+  
+  .map-header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #fff;
+  }
+  
+  .map-header h1 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    background: linear-gradient(45deg, #6ab43e, #ffd700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .map-header p {
+    font-size: 1.1rem;
+    color: #ccc;
+    margin-bottom: 0;
+  }
+  
+  #map {
+    height: 600px;
+    width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  .map-controls {
+    margin: 20px 0;
+    text-align: center;
+  }
+  
+  .btn-cinema {
+    background: linear-gradient(45deg, #6ab43e, #4a8c2a);
+    border: none;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(106, 180, 62, 0.3);
+  }
+  
+  .btn-cinema:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(106, 180, 62, 0.4);
+    color: white;
+  }
+  
+  .custom-popup {
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  .popup-header {
+    background: linear-gradient(45deg, #6ab43e, #4a8c2a);
+    color: white;
+    padding: 10px 15px;
+    margin: -10px -10px 10px -10px;
+    border-radius: 5px 5px 0 0;
+    font-weight: 600;
+  }
+  
+  .movie-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .movie-item:last-child {
+    border-bottom: none;
+  }
+  
+  .movie-title {
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .movie-score {
+    background: linear-gradient(45deg, #6ab43e, #4a8c2a);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  
+  .loading {
+    text-align: center;
+    color: #6ab43e;
+    font-size: 1.1rem;
+    margin: 20px 0;
+  }
+  
+  .map-stats {
+    background: rgba(106, 180, 62, 0.1);
+    border: 1px solid rgba(106, 180, 62, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+    margin: 20px 0;
+    text-align: center;
+  }
+  
+  .stat-item {
+    display: inline-block;
+    margin: 0 20px;
+    color: #6ab43e;
+    font-weight: 600;
+  }
+  
+  .stat-number {
+    font-size: 1.5rem;
+    display: block;
+    color: #fff;
+  }
+</style>
+
+<div class="container-fluid">
+  <div class="map-container">
+    <div class="map-header">
+      <h1><i class="fas fa-map-marked-alt me-3"></i>Local Popularity Map</h1>
+      <p>Discover trending movies across different regions</p>
+    </div>
+    
+    <div class="map-stats">
+      <div class="stat-item">
+        <span class="stat-number" id="totalRegions">0</span>
+        <span>Regions</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number" id="totalMovies">0</span>
+        <span>Movies Tracked</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number" id="avgScore">0</span>
+        <span>Avg Score</span>
+      </div>
+    </div>
+    
+    <div class="loading" id="loadingIndicator">
+      <i class="fas fa-spinner fa-spin me-2"></i>Loading trending data...
+    </div>
+    
+    <div id="map"></div>
+    
+    <div class="map-controls">
+      <a href="{% url 'home.index' %}" class="btn btn-cinema me-3">
+        <i class="fas fa-home me-2"></i>Back to Home
+      </a>
+      <a href="{% url 'movies.index' %}" class="btn btn-cinema">
+        <i class="fas fa-film me-2"></i>Browse Movies
+      </a>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  // Initialize map with dark theme
+  var map = L.map('map', {
+    center: [39.8283, -98.5795],
+    zoom: 4,
+    zoomControl: true
+  });
+
+  // Use a dark tile layer for better cinema theme
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 20
+  }).addTo(map);
+
+  // Custom movie icon
+  var movieIcon = L.divIcon({
+    className: 'custom-movie-marker',
+    html: '<div style="background: linear-gradient(45deg, #6ab43e, #4a8c2a); color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 3px 10px rgba(0,0,0,0.3);"><i class="fas fa-film"></i></div>',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  });
+
+  // Fetch and display trending movie data
+  fetch("{% url 'movie_map_data' %}")
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('loadingIndicator').style.display = 'none';
+      
+      let totalRegions = data.length;
+      let totalMovies = 0;
+      let totalScore = 0;
+      let scoreCount = 0;
+      
+      data.forEach(region => {
+        if (region.lat && region.lng) {
+          totalMovies += region.trending.length;
+          
+          // Build enhanced popup content
+          let popupContent = `
+            <div class="custom-popup">
+              <div class="popup-header">
+                <i class="fas fa-map-marker-alt me-2"></i>${region.region}
+              </div>
+              <div style="padding: 10px;">
+                <h6 style="margin-bottom: 15px; color: #333; font-weight: 600;">
+                  <i class="fas fa-fire me-2" style="color: #ff6b35;"></i>Trending Movies
+                </h6>
+          `;
+          
+          region.trending.forEach((movie, index) => {
+            totalScore += movie.score;
+            scoreCount++;
+            
+            popupContent += `
+              <div class="movie-item">
+                <span class="movie-title">${index + 1}. ${movie.title}</span>
+                <span class="movie-score">${movie.score}</span>
+              </div>
+            `;
+          });
+          
+          popupContent += `
+                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee; text-align: center;">
+                  <small style="color: #666;">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Click to explore more details
+                  </small>
+                </div>
+              </div>
+            </div>
+          `;
+
+          L.marker([region.lat, region.lng], { icon: movieIcon })
+           .addTo(map)
+           .bindPopup(popupContent, {
+             maxWidth: 300,
+             className: 'custom-popup'
+           });
+        }
+      });
+      
+      // Update stats
+      document.getElementById('totalRegions').textContent = totalRegions;
+      document.getElementById('totalMovies').textContent = totalMovies;
+      document.getElementById('avgScore').textContent = scoreCount > 0 ? (totalScore / scoreCount).toFixed(1) : '0.0';
+    })
+    .catch(error => {
+      console.error('Error loading map data:', error);
+      document.getElementById('loadingIndicator').innerHTML = 
+        '<i class="fas fa-exclamation-triangle me-2"></i>Error loading data. Please try again.';
+    });
+</script>
+{% endblock content %}
