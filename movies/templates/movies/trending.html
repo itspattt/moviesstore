@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Trending Movies Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map {
+      height: 600px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align: center; margin-top: 20px;">Trending Movies by Region</h2>
+  <div id="map"></div>
+  <a class="btn btn-secondary" href="{% url 'home.index' %}">Home</a>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    var map = L.map('map').setView([39.8283, -98.5795], 4); // center on USA
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Fetch trending movie data
+    fetch("{% url 'movie_map_data' %}")
+      .then(response => response.json())
+      .then(data => {
+        data.forEach(region => {
+          if (region.lat && region.lng) {
+            // Build popup content with top movies
+            let popupContent = `<b>${region.region}</b><br><br>`;
+            region.trending.forEach(movie => {
+              popupContent += `${movie.title} (Score: ${movie.score})<br>`;
+            });
+
+            L.marker([region.lat, region.lng])
+             .addTo(map)
+             .bindPopup(popupContent);
+          }
+        });
+      });
+  </script>
+</body>
+</html>
