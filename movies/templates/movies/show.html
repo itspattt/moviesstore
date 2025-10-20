@@ -40,7 +40,7 @@
             <button type="submit" class="btn btn-primary">Submit Rating</button>
         </form>
         {% else %}
-        <p><a href="{% url 'login' %}">Login</a> to rate this movie.</p>
+        <p><a href="{% url 'accounts.login' %}">Login</a> to rate this movie.</p>
         {% endif %}
         <hr />
         <h2>Reviews</h2>
